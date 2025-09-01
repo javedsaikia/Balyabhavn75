@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Photo Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .preview { margin-top: 10px; }
+        .preview img { max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Supabase Photo Upload</h1>
+        
+        <form id="uploadForm" action="/api/upload/photo" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="photo">Select Photo:</label>
+                <input type="file" id="photo" name="photo" accept="image/*" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="userId">User ID (optional):</label>
+                <input type="text" id="userId" name="userId" placeholder="test-user-123" value="test-user">
+            </div>
+            
+            <button type="submit" id="uploadBtn">Upload Photo</button>
+            <button type="button" id="ajaxBtn" style="margin-left: 10px; background: #28a745;">Test with AJAX</button>
+        </form>
+        
+        <div id="result"></div>
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        // AJAX Upload Function
+        async function uploadWithAjax() {
+            const uploadBtn = document.getElementById('uploadBtn');
+            const ajaxBtn = document.getElementById('ajaxBtn');
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('preview');
+            
+            const photoFile = document.getElementById('photo').files[0];
+            const userId = document.getElementById('userId').value || 'test-user';
+            
+            if (!photoFile) {
+                resultDiv.innerHTML = '<div class="result error">Please select a photo file.</div>';
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewDiv.innerHTML = `
+                    <div class="preview">
+                        <h3>Preview:</h3>
+                        <img src="${e.target.result}" alt="Preview">
+                        <p>File: ${photoFile.name} (${(photoFile.size / 1024 / 1024).toFixed(2)} MB)</p>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(photoFile);
+            
+            ajaxBtn.disabled = true;
+            ajaxBtn.textContent = 'Uploading...';
+            resultDiv.innerHTML = '<div class="result">Uploading photo via AJAX...</div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('photo', photoFile);
+                formData.append('userId', userId);
+                
+                const response = await fetch('/api/upload/photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>AJAX Upload Successful!</h3>
+                            <p><strong>URL:</strong> <a href="${result.data.url}" target="_blank">${result.data.url}</a></p>
+                            <p><strong>Path:</strong> ${result.data.path}</p>
+                            <p><strong>File Size:</strong> ${(result.data.fileSize / 1024 / 1024).toFixed(2)} MB</p>
+                            <p><strong>File Type:</strong> ${result.data.fileType}</p>
+                            <img src="${result.data.url}" alt="Uploaded" style="max-width: 200px; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>AJAX Upload Failed</h3>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>AJAX Upload Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                ajaxBtn.disabled = false;
+                ajaxBtn.textContent = 'Test with AJAX';
+            }
+        }
+        
+        // Form Submit Handler (for regular form submission)
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            const photoFile = document.getElementById('photo').files[0];
+            
+            if (!photoFile) {
+                e.preventDefault();
+                document.getElementById('result').innerHTML = '<div class="result error">Please select a photo file.</div>';
+                return;
+            }
+            
+            // Let the form submit normally
+            document.getElementById('result').innerHTML = '<div class="result">Uploading photo via form submission...</div>';
+        });
+        
+        // AJAX Button Handler
+        document.getElementById('ajaxBtn').addEventListener('click', uploadWithAjax);
+        
+        // Legacy AJAX handler (keeping for compatibility)
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            // Only prevent default if we want to use AJAX
+            if (e.submitter && e.submitter.id === 'uploadBtn') {
+                return; // Let form submit normally
+            }
+            
+            e.preventDefault();
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('preview');
+            
+            const photoFile = document.getElementById('photo').files[0];
+            const userId = document.getElementById('userId').value || 'test-user';
+            
+            if (!photoFile) {
+                resultDiv.innerHTML = '<div class="result error">Please select a photo file.</div>';
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewDiv.innerHTML = `
+                    <div class="preview">
+                        <h3>Preview:</h3>
+                        <img src="${e.target.result}" alt="Preview">
+                        <p>File: ${photoFile.name} (${(photoFile.size / 1024 / 1024).toFixed(2)} MB)</p>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(photoFile);
+            
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            resultDiv.innerHTML = '<div class="result">Uploading photo...</div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('photo', photoFile);
+                formData.append('userId', userId);
+                
+                const response = await fetch('/api/upload/photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>Upload Successful!</h3>
+                            <p><strong>URL:</strong> <a href="${result.data.url}" target="_blank">${result.data.url}</a></p>
+                            <p><strong>Path:</strong> ${result.data.path}</p>
+                            <p><strong>File Size:</strong> ${(result.data.fileSize / 1024 / 1024).toFixed(2)} MB</p>
+                            <p><strong>File Type:</strong> ${result.data.fileType}</p>
+                            <img src="${result.data.url}" alt="Uploaded" style="max-width: 200px; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>Upload Failed</h3>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>Upload Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Photo';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Image optimization for Vercel
+  images: {
+    domains: [
+      'your-supabase-project.supabase.co',
+      'hebbkx1anhila5yf.public.blob.vercel-storage.com'
+    ],
+    formats: ['image/webp', 'image/avif'],
+    unoptimized: false,
+  },
+  
+  // Enable production optimizations
+  swcMinify: true,
+  compress: true,
+  
+  // Environment variables
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+  
+  // Webpack configuration for better builds
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
+  },
+  
+  // Enable experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+  },
+  
+  // Headers for security
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
+          },
+        ],
+      },
+    ];
+  },
+  
+  // Enable proper error checking
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+}
+
+export default nextConfig

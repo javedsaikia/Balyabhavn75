@@ -1,0 +1,10 @@
+# Ignore pnpm files
+pnpm-lock.yaml
+.pnpm-store/
+.pnpm-debug.log*
+node_modules/.pnpm/
+
+# Ignore other package manager files that might conflict
+yarn.lock
+.yarn/
+.yarnrc.yml
