@@ -5,7 +5,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'your-supabase-project.supabase.co',
+        hostname: 'dmiofitmelntaiyrdoac.supabase.co',
         port: '',
         pathname: '/**',
       },
@@ -15,6 +15,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
     formats: ['image/webp', 'image/avif'],
     unoptimized: false,

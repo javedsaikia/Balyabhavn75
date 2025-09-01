@@ -78,10 +78,20 @@ export const supabaseAdmin = getSupabaseAdminClient()
 
 // Connection status management
 export const isSupabaseConnected = () => {
-  const connectionEnabled = process.env.NEXT_PUBLIC_SUPABASE_CONNECTION_ENABLED === 'true'
+  // Check if we're in browser environment and get the env var properly
+  const connectionEnabled = typeof window !== 'undefined' 
+    ? process.env.NEXT_PUBLIC_SUPABASE_CONNECTION_ENABLED === 'true'
+    : process.env.NEXT_PUBLIC_SUPABASE_CONNECTION_ENABLED === 'true'
+  
   const validCredentials = hasValidCredentials()
   
-  return connectionEnabled && validCredentials
+  // If connection is explicitly disabled, return false
+  if (process.env.NEXT_PUBLIC_SUPABASE_CONNECTION_ENABLED === 'false') {
+    return false
+  }
+  
+  // If we have valid credentials, assume connection is enabled
+  return validCredentials
 }
 
 // Test connection
