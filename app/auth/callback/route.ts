@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get('code')
     const error = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
-    const next = searchParams.get('next') ?? '/'
+    const next = searchParams.get('next') ?? '/events'
     const state = searchParams.get('state')
 
     // Also check for hash parameters (for implicit flow)
@@ -30,6 +30,11 @@ export async function GET(request: NextRequest) {
     console.log('Error:', error)
     console.log('Error Description:', errorDescription)
     console.log('All search params:', Object.fromEntries(searchParams))
+    
+    // Additional PKCE debugging
+    console.log('State:', state)
+    console.log('Error:', error)
+    console.log('Error description:', errorDescription)
     console.log('==========================')
 
     // If there's an OAuth error from the provider
@@ -46,26 +51,35 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     
     if (code) {
-      // PKCE flow - exchange code for session
-      console.log('Attempting code exchange with code length:', code.length)
+      console.log('Processing authorization code...')
+      
+      // Create a fresh Supabase client with explicit PKCE configuration
+      const supabase = await createClient()
       
       try {
+        console.log('Attempting code exchange with PKCE...')
+        
+        // Try the code exchange with better error handling
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
+        
+        console.log('Exchange result - Data:', !!data)
+        console.log('Exchange result - Session:', !!data?.session)
+        console.log('Exchange result - User:', !!data?.user)
+        console.log('Exchange result - Error:', exchangeError?.message)
+        
         if (exchangeError) {
-          console.error('Code exchange error details:', {
-            message: exchangeError.message,
-            status: exchangeError.status,
-            name: exchangeError.name
-          })
+          console.error('Code exchange failed:', exchangeError)
+          console.error('Full error object:', JSON.stringify(exchangeError, null, 2))
           
-          // If it's a PKCE error, try to redirect to login with a clear message
-          if (exchangeError.message.includes('code_verifier') || exchangeError.message.includes('invalid request')) {
-            console.log('PKCE verification failed, redirecting to fresh login')
-            return NextResponse.redirect(`${origin}/?error=pkce_verification_failed&message=Please try logging in again`)
+          // Handle specific PKCE errors
+          if (exchangeError.message?.includes('code_verifier') || 
+              exchangeError.message?.includes('invalid request') ||
+              exchangeError.message?.includes('PKCE')) {
+            console.log('PKCE verification failed, redirecting with error')
+            return NextResponse.redirect(`${origin}/?error=pkce_verification_failed`)
           }
           
-          return NextResponse.redirect(`${origin}/?error=code_exchange_failed&details=${encodeURIComponent(exchangeError.message)}`)
+          return NextResponse.redirect(`${origin}/?error=auth_callback_error&details=${encodeURIComponent(exchangeError.message)}`)
         }
 
       if (data.session && data.user) {

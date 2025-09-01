@@ -95,17 +95,21 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log('=== Client-side Google Sign-in Debug ===')
       setIsLoading(true)
       setError("")
       
       // Check if Supabase is properly configured
       const supabaseConnected = isSupabaseConnected()
+      console.log('Supabase connected:', supabaseConnected)
       
       if (!supabaseConnected) {
+        console.log('Supabase not connected, showing error')
         setError('Google authentication is not available. Please configure Supabase or use email login.')
         return
       }
       
+      console.log('Making request to /api/auth/google')
       // Call the API route for Google OAuth
       const response = await fetch('/api/auth/google', {
         method: 'POST',
@@ -113,6 +117,9 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
       })
+      
+      console.log('Response status:', response.status)
+      console.log('Response ok:', response.ok)
       
       const data = await response.json()
       

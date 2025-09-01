@@ -6,6 +6,13 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get('origin') || 'http://localhost:3000'
     const supabase = await createClient()
     
+    console.log('=== Google OAuth Initiation Debug ===')
+    console.log('Origin:', origin)
+    console.log('Redirect URL:', `${origin}/auth/callback`)
+    
+    // Clear any existing session first
+    await supabase.auth.signOut()
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -16,6 +23,10 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+    
+    console.log('OAuth data received:', !!data)
+    console.log('OAuth URL generated:', !!data?.url)
+    console.log('=====================================')
 
     if (error) {
       console.error('Google OAuth error:', error)
