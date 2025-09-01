@@ -177,26 +177,28 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="relative z-10 min-h-screen px-4 py-8">
+      <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            Diamond Anniversary
-            <span className="block text-2xl md:text-3xl text-purple-300 font-normal mt-2">
-              75 Years of Excellence
-            </span>
-          </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent font-bold text-2xl block mb-2 animate-pulse">
-              Balya Bhavan Jorhat
-            </span>
-            <span className="text-lg font-semibold text-white/90 block mb-1">
-              75 Years of 
-            </span>
-            <span className="bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent font-bold text-xl">
-              Shaping Minds, Touching Hearts
-            </span>
-          </p>
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+              Diamond Anniversary
+              <span className="block text-2xl md:text-3xl text-purple-300 font-normal mt-2">
+                75 Years of Excellence
+              </span>
+            </h1>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent font-bold text-2xl block mb-2 animate-pulse">
+                Balya Bhavan Jorhat
+              </span>
+              <span className="text-lg font-semibold text-white/90 block mb-1">
+                75 Years of 
+              </span>
+              <span className="bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent font-bold text-xl">
+                Shaping Minds, Touching Hearts
+              </span>
+            </p>
+          </div>
         </div>
 
         {featuredEvent && (
@@ -205,7 +207,7 @@ export default function EventsPage() {
               <CalendarDays className="w-6 h-6 text-purple-400" />
               Featured Event
             </h2>
-            <Card className="bg-white/10 border-white/20 backdrop-blur-lg overflow-hidden">
+            <Card className="bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl overflow-hidden hover:bg-white/15 transition-all duration-500 hover:shadow-purple-500/20 hover:shadow-xl">
               <div className="flex flex-col lg:flex-row">
                 <div className="lg:w-1/3 xl:w-2/5">
                   <div className="relative aspect-[3/2] lg:aspect-[4/5] xl:aspect-[3/2] overflow-hidden">
@@ -264,23 +266,24 @@ export default function EventsPage() {
         )}
 
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
-                <Input
-                  placeholder="Search events..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                />
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-xl">
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+                  <Input
+                    placeholder="Search events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 backdrop-blur-sm"
+                  />
+                </div>
               </div>
-            </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full md:w-48 bg-white/10 border-white/20 text-white">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full md:w-48 bg-white/10 border-white/20 text-white backdrop-blur-sm">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="celebration">Celebration</SelectItem>
@@ -289,10 +292,10 @@ export default function EventsPage() {
                 <SelectItem value="networking">Networking</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-48 bg-white/10 border-white/20 text-white">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-48 bg-white/10 border-white/20 text-white backdrop-blur-sm">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
               <SelectContent>
                 <SelectItem value="date">Date</SelectItem>
                 <SelectItem value="attendees">Popularity</SelectItem>
@@ -316,6 +319,7 @@ export default function EventsPage() {
               >
                 <Calendar className="w-4 h-4" />
               </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -325,7 +329,7 @@ export default function EventsPage() {
             filteredAndSortedEvents
               .filter((event) => !event?.featured)
               .map((event) => (
-              <Card key={event?.id || Math.random()} className="bg-white/10 border-white/20 backdrop-blur-lg overflow-hidden hover:bg-white/15 transition-all duration-300">
+              <Card key={event?.id || Math.random()} className="bg-white/8 border border-white/20 backdrop-blur-xl shadow-xl overflow-hidden hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 transform hover:-translate-y-1">
                 <div className="relative">
                   {event?.image && (event.image.startsWith('http') || event.image.startsWith('https')) ? (
                     <Image
@@ -401,22 +405,19 @@ export default function EventsPage() {
         </div>
 
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Ready to Join the Celebration?</h2>
-          <p className="text-white/80 mb-6 max-w-2xl mx-auto">
-            Don't miss out on this historic celebration. Register for events, connect with fellow alumni, and be part of our diamond anniversary.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3"
-              onClick={() => router.push('/register/1')}
-            >
-              Register for All Events
-            </Button>
-            <Link href="/profile">
-              <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 bg-transparent px-8 py-3">
-                View Profile
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-4">Ready to Join the Celebration?</h2>
+            <p className="text-white/80 mb-6 max-w-2xl mx-auto">
+              Don't miss out on this historic celebration. Register for events, connect with fellow alumni, and be part of our diamond anniversary.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
+                onClick={() => router.push('/register/1')}
+              >
+                Register for All Events
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </div>

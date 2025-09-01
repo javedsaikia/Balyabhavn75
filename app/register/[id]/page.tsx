@@ -45,6 +45,8 @@ export default function RegistrationPage() {
     address: "",
     yearOfPassing: "",
     attendance: "",
+    payForRegistration: "",
+    amount: "",
     photo: null as File | null,
   })
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -52,8 +54,34 @@ export default function RegistrationPage() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Format currency input
+  const formatCurrency = (value: string): string => {
+    // Remove all non-numeric characters except decimal point
+    const numericValue = value.replace(/[^\d.]/g, "")
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split(".")
+    if (parts.length > 2) {
+      return parts[0] + "." + parts.slice(1).join("")
+    }
+    
+    // Limit to 2 decimal places
+    if (parts[1] && parts[1].length > 2) {
+      return parts[0] + "." + parts[1].substring(0, 2)
+    }
+    
+    return numericValue
+  }
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    let processedValue = value
+    
+    // Apply currency formatting for amount field
+    if (field === "amount") {
+      processedValue = formatCurrency(value)
+    }
+    
+    setFormData((prev) => ({ ...prev, [field]: processedValue }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }))
     }
@@ -114,6 +142,26 @@ export default function RegistrationPage() {
 
     if (!formData.attendance) {
       newErrors.attendance = "Please select an attendance type"
+    }
+
+    if (!formData.payForRegistration) {
+      newErrors.payForRegistration = "Please select whether you will pay for registration"
+    }
+
+    // Validate amount if payment is required
+    if (formData.payForRegistration === "yes") {
+      if (!formData.amount.trim()) {
+        newErrors.amount = "Amount is required when paying for registration"
+      } else {
+        const amount = parseFloat(formData.amount.replace(/[^\d.]/g, ""))
+        if (isNaN(amount) || amount <= 0) {
+          newErrors.amount = "Please enter a valid amount greater than 0"
+        } else if (amount < 100) {
+          newErrors.amount = "Minimum amount is ₹100"
+        } else if (amount > 50000) {
+          newErrors.amount = "Maximum amount is ₹50,000"
+        }
+      }
     }
 
     setErrors(newErrors)
@@ -186,10 +234,6 @@ export default function RegistrationPage() {
       localStorage.setItem("registrations", JSON.stringify(existingRegistrations))
 
       setSubmitStatus("success")
-
-      setTimeout(() => {
-        router.push("/profile")
-      }, 3000)
     } catch (error) {
       console.error("[v0] Registration failed:", error)
       setSubmitStatus("error")
@@ -246,7 +290,7 @@ export default function RegistrationPage() {
               >
                 Register for Another Event
               </Button>
-              <Link href="/profile">
+              <Link href="/my-registrations">
                 <Button className="w-full bg-white text-black hover:bg-white/90">View My Registrations</Button>
               </Link>
             </div>
@@ -287,6 +331,9 @@ export default function RegistrationPage() {
             <p className="text-amber-200 font-semibold">
               <CreditCard className="w-4 h-4 inline mr-2" />
               Registration Fee: ₹1,000
+            </p>
+            <p className="text-amber-200/80 text-sm mt-1">
+              ₹500 for Post-2018 Passouts
             </p>
           </div>
         </div>
@@ -407,6 +454,111 @@ export default function RegistrationPage() {
                   {errors.attendance && <p className="text-red-400 text-sm">{errors.attendance}</p>}
                 </div>
 
+                {/* Pay for Registration Radio Buttons */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2 text-white">
+                    <CreditCard className="w-4 h-4" />
+                    Pay for the Registration <span className="text-red-400">*</span>
+                  </Label>
+                  <div className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <input
+                          type="radio"
+                          id="pay-yes"
+                          name="payForRegistration"
+                          value="yes"
+                          checked={formData.payForRegistration === "yes"}
+                          onChange={(e) => handleInputChange("payForRegistration", e.target.value)}
+                          className="sr-only"
+                        />
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 cursor-pointer transition-all duration-200 ${
+                            formData.payForRegistration === "yes"
+                              ? "border-white bg-white"
+                              : "border-white/40 bg-transparent hover:border-white/60"
+                          } ${errors.payForRegistration ? "border-red-500/50" : ""}`}
+                          onClick={() => handleInputChange("payForRegistration", "yes")}
+                        >
+                          {formData.payForRegistration === "yes" && (
+                            <div className="w-2 h-2 bg-black rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
+                      </div>
+                      <Label
+                        htmlFor="pay-yes"
+                        className="text-white cursor-pointer select-none"
+                        onClick={() => handleInputChange("payForRegistration", "yes")}
+                      >
+                        Yes
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <input
+                          type="radio"
+                          id="pay-no"
+                          name="payForRegistration"
+                          value="no"
+                          checked={formData.payForRegistration === "no"}
+                          onChange={(e) => handleInputChange("payForRegistration", e.target.value)}
+                          className="sr-only"
+                        />
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 cursor-pointer transition-all duration-200 ${
+                            formData.payForRegistration === "no"
+                              ? "border-white bg-white"
+                              : "border-white/40 bg-transparent hover:border-white/60"
+                          } ${errors.payForRegistration ? "border-red-500/50" : ""}`}
+                          onClick={() => handleInputChange("payForRegistration", "no")}
+                        >
+                          {formData.payForRegistration === "no" && (
+                            <div className="w-2 h-2 bg-black rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                          )}
+                        </div>
+                      </div>
+                      <Label
+                        htmlFor="pay-no"
+                        className="text-white cursor-pointer select-none"
+                        onClick={() => handleInputChange("payForRegistration", "no")}
+                      >
+                        No
+                      </Label>
+                    </div>
+                  </div>
+                  {errors.payForRegistration && <p className="text-red-400 text-sm">{errors.payForRegistration}</p>}
+                </div>
+
+                {/* Amount Input - Conditional */}
+                {formData.payForRegistration === "yes" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm font-medium flex items-center gap-2 text-white">
+                      <CreditCard className="w-4 h-4" />
+                      Amount in Rupees <span className="text-red-400">*</span>
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 text-sm font-medium">
+                        ₹
+                      </span>
+                      <Input
+                        type="text"
+                        id="amount"
+                        placeholder="Enter amount (e.g., 5000.00)"
+                        value={formData.amount}
+                        onChange={(e) => handleInputChange("amount", e.target.value)}
+                        className={`pl-8 bg-white/10 border-white/20 placeholder-white/40 focus:bg-white/20 focus:border-white/30 text-white ${
+                          errors.amount ? "border-red-500/50" : ""
+                        }`}
+                        required
+                      />
+                    </div>
+                    {errors.amount && <p className="text-red-400 text-sm">{errors.amount}</p>}
+                    <p className="text-white/60 text-xs">
+                      Enter amount between ₹100 and ₹50,000. Only numbers and decimal points are allowed.
+                    </p>
+                  </div>
+                )}
+
                 {/* Photo Upload */}
                 <div className="space-y-2">
                   <Label htmlFor="photo" className="text-sm font-medium flex items-center gap-2 text-white">
@@ -461,6 +613,9 @@ export default function RegistrationPage() {
               <div className="text-center p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                 <h3 className="text-xl font-bold text-amber-200 mb-2">Registration Fee</h3>
                 <p className="text-3xl font-bold text-white">₹1,000</p>
+              </div>
+              <div className="text-center mt-2">
+                <p className="text-sm text-white/80">₹500 for Post-2018 Passouts</p>
               </div>
 
               {/* QR Code */}
