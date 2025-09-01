@@ -54,9 +54,10 @@ const users: (User | Admin)[] = [
 ]
 
 // Mock password storage - replace with real database
+// Adding fallback passwords for testing when Supabase is not available
 const passwords: Record<string, string> = {
-
-
+  "admin@balyabhavan.edu": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
+  "rajesh.kumar@example.com": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
 }
 
 export const REGISTRATION_CAPACITY = 1000

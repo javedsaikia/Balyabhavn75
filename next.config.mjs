@@ -2,9 +2,19 @@
 const nextConfig = {
   // Image optimization for Vercel
   images: {
-    domains: [
-      'your-supabase-project.supabase.co',
-      'hebbkx1anhila5yf.public.blob.vercel-storage.com'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'your-supabase-project.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hebbkx1anhila5yf.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     unoptimized: false,
