@@ -249,6 +249,8 @@ export default function RegistrationPage() {
       address: "",
       yearOfPassing: "",
       attendance: "",
+      payForRegistration: "",
+      amount: "",
       photo: null,
     })
     setPhotoPreview(null)
