@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useEffect, lazy, Suspense } from "react"
+import { AuthProvider } from "./hooks/useAuth"
 
 const AnimatedBackground = lazy(() => import("@/components/animated-background"))
 
@@ -119,11 +120,11 @@ export default function ClientLayout({
   }, [])
 
   return (
-    <>
+    <AuthProvider>
       <Suspense fallback={null}>
         <AnimatedBackground />
       </Suspense>
       {children}
-    </>
+    </AuthProvider>
   )
 }

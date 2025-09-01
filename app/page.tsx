@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Mail, Lock, Eye, EyeOff, Users, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,44 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [loginType, setLoginType] = useState<"user" | "admin">("user")
   const router = useRouter()
+
+  // Handle OAuth errors from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const error = urlParams.get('error')
+    const details = urlParams.get('details')
+    const message = urlParams.get('message')
+    
+    if (error) {
+      let errorMessage = 'Authentication failed'
+      
+      switch (error) {
+        case 'pkce_verification_failed':
+          errorMessage = message || 'OAuth verification failed. Please try logging in again.'
+          break
+        case 'code_exchange_failed':
+          errorMessage = 'OAuth authentication failed. Please try again or contact support if the issue persists.'
+          break
+        case 'oauth_provider_error':
+          errorMessage = `OAuth provider error: ${details || 'Unknown error'}`
+          break
+        case 'no_auth_code':
+          errorMessage = 'OAuth authentication was cancelled or failed to complete.'
+          break
+        case 'no_session_created':
+          errorMessage = 'Failed to create authentication session. Please try again.'
+          break
+        default:
+          errorMessage = details ? decodeURIComponent(details) : 'Authentication failed'
+      }
+      
+      setError(errorMessage)
+      
+      // Clean up URL parameters
+      const cleanUrl = window.location.pathname
+      window.history.replaceState({}, document.title, cleanUrl)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

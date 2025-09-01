@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [dataLoaded, setDataLoaded] = useState(false)
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -54,24 +55,38 @@ export default function AdminDashboard() {
         }
 
         const usersData = await usersResponse.json()
-        setUsers(usersData.users)
+        // Ensure we always set an array, even if data is malformed
+        const users = Array.isArray(usersData.users) ? usersData.users : []
+        setUsers(users)
+        setDataLoaded(true)
 
         // Fetch registration stats
         const statsResponse = await fetch("/api/auth/stats")
         if (statsResponse.ok) {
           const statsData = await statsResponse.json()
           setStats({
-            totalUsers: statsData.stats.totalUsers,
-            activeUsers: statsData.stats.activeUsers,
-            pendingUsers: statsData.stats.pendingUsers,
+            totalUsers: statsData.stats.totalUsers || 0,
+            activeUsers: statsData.stats.activeUsers || 0,
+            pendingUsers: statsData.stats.pendingUsers || 0,
             suspendedUsers: statsData.stats.suspendedUsers || 0,
-            availableSlots: statsData.stats.availableSlots,
+            availableSlots: statsData.stats.availableSlots || 1000,
+            totalEvents: 4,
+          })
+        } else {
+          // Set default stats on error
+          setStats({
+            totalUsers: 0,
+            activeUsers: 0,
+            pendingUsers: 0,
+            suspendedUsers: 0,
+            availableSlots: 1000,
             totalEvents: 4,
           })
         }
       } catch (error) {
         console.error("Failed to load admin data:", error)
         setError("Failed to load dashboard data")
+        setUsers([]) // Set empty array on error
       } finally {
         setIsLoading(false)
       }
@@ -81,14 +96,23 @@ export default function AdminDashboard() {
   }, [router])
 
   const filteredUsers = useMemo(() => {
-    let filtered = users
+    // Ensure users is always an array to prevent mapping errors
+    if (!Array.isArray(users) || users.length === 0) {
+      return []
+    }
+
+    let filtered = users.filter((user) => {
+      // Add null checks for user properties
+      if (!user) return false
+      return true
+    })
 
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.id.toLowerCase().includes(searchTerm.toLowerCase()),
+          (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user.id || '').toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
@@ -328,17 +352,17 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell className="text-white/90 font-mono text-sm">{user.id}</TableCell>
-                      <TableCell className="text-white/90 font-medium">{user.name}</TableCell>
+                  {filteredUsers && filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                    <TableRow key={user?.id || Math.random()} className="border-white/10 hover:bg-white/5">
+                      <TableCell className="text-white/90 font-mono text-sm">{user?.id || 'N/A'}</TableCell>
+                      <TableCell className="text-white/90 font-medium">{user?.name || 'Unknown'}</TableCell>
                       <TableCell className="text-white/80">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm">
                             <Mail className="w-3 h-3" />
-                            {user.email}
+                            {user?.email || 'No email'}
                           </div>
-                          {user.phone && (
+                          {user?.phone && (
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="w-3 h-3" />
                               {user.phone}
@@ -348,15 +372,15 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell className="text-white/80">
                         <div className="space-y-1 text-sm">
-                          {user.batch && <div>Batch: {user.batch}</div>}
-                          {user.department && <div>Dept: {user.department}</div>}
-                          {user.yearOfPassing && <div>Year: {user.yearOfPassing}</div>}
+                          {user?.batch && <div>Batch: {user.batch}</div>}
+                          {user?.department && <div>Dept: {user.department}</div>}
+                          {user?.yearOfPassing && <div>Year: {user.yearOfPassing}</div>}
                         </div>
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={user.status || "active"}
-                          onValueChange={(value) => handleStatusUpdate(user.id, value)}
+                          value={user?.status || "active"}
+                          onValueChange={(value) => handleStatusUpdate(user?.id, value)}
                         >
                           <SelectTrigger className="w-24 h-8 bg-white/10 border-white/20 text-white text-xs">
                             <SelectValue />
@@ -374,7 +398,7 @@ export default function AdminDashboard() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell className="text-white/80 text-sm">{user.registrationDate}</TableCell>
+                      <TableCell className="text-white/80 text-sm">{user?.registrationDate || 'N/A'}</TableCell>
                       <TableCell>
                         <Button
                           size="sm"
@@ -388,14 +412,33 @@ export default function AdminDashboard() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-white/60">
+                        {isLoading ? 'Loading users...' : (error ? 'Error loading users' : 'No users found')}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
 
-            {filteredUsers.length === 0 && (
+            {!isLoading && dataLoaded && filteredUsers.length === 0 && !error && (
               <div className="text-center py-8">
                 <p className="text-white/60">No alumni found matching your criteria.</p>
+              </div>
+            )}
+            
+            {error && (
+              <div className="text-center py-8">
+                <p className="text-red-400">Error: {error}</p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  variant="outline" 
+                  className="mt-4 border-white/20 text-white hover:bg-white/10 bg-transparent"
+                >
+                  Retry
+                </Button>
               </div>
             )}
           </CardContent>

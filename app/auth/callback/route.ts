@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
     const next = searchParams.get('next') ?? '/'
+    const state = searchParams.get('state')
 
     // Also check for hash parameters (for implicit flow)
     const hash = request.url.split('#')[1]
@@ -23,6 +24,8 @@ export async function GET(request: NextRequest) {
     console.log('Full URL:', request.url)
     console.log('Origin:', origin)
     console.log('Code present:', !!code)
+    console.log('Code length:', code?.length || 0)
+    console.log('State present:', !!state)
     console.log('Access token present:', !!accessToken)
     console.log('Error:', error)
     console.log('Error Description:', errorDescription)
@@ -44,12 +47,26 @@ export async function GET(request: NextRequest) {
     
     if (code) {
       // PKCE flow - exchange code for session
-      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+      console.log('Attempting code exchange with code length:', code.length)
+      
+      try {
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
-      if (exchangeError) {
-        console.error('Code exchange error:', exchangeError)
-        return NextResponse.redirect(`${origin}/?error=code_exchange_failed&details=${encodeURIComponent(exchangeError.message)}`)
-      }
+        if (exchangeError) {
+          console.error('Code exchange error details:', {
+            message: exchangeError.message,
+            status: exchangeError.status,
+            name: exchangeError.name
+          })
+          
+          // If it's a PKCE error, try to redirect to login with a clear message
+          if (exchangeError.message.includes('code_verifier') || exchangeError.message.includes('invalid request')) {
+            console.log('PKCE verification failed, redirecting to fresh login')
+            return NextResponse.redirect(`${origin}/?error=pkce_verification_failed&message=Please try logging in again`)
+          }
+          
+          return NextResponse.redirect(`${origin}/?error=code_exchange_failed&details=${encodeURIComponent(exchangeError.message)}`)
+        }
 
       if (data.session && data.user) {
         // Check if user profile exists in our users table
@@ -93,6 +110,10 @@ export async function GET(request: NextRequest) {
         const redirectResponse = NextResponse.redirect(`${origin}/events`)
         console.log('Redirect response created successfully')
         return redirectResponse
+      }
+      } catch (codeExchangeError) {
+        console.error('Code exchange exception:', codeExchangeError)
+        return NextResponse.redirect(`${origin}/?error=code_exchange_exception&details=${encodeURIComponent(String(codeExchangeError))}`)
       }
     }
 

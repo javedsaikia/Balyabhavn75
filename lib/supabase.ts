@@ -44,6 +44,7 @@ export const getSupabaseClient = () => {
   return hasValidCredentials() 
     ? createClient(supabaseUrl!, supabaseAnonKey!, {
         auth: {
+          flowType: 'pkce',
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: true

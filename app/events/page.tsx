@@ -23,7 +23,24 @@ export default function EventsPage() {
     router.push(`/register/${eventId}`)
   }
 
-  const events = [
+  // Initialize events as empty array to prevent mapping errors
+  const [events, setEvents] = useState<any[]>([])
+  const [viewMode, setViewMode] = useState<"grid" | "calendar">("grid")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [sortBy, setSortBy] = useState("date")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Load events data
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        
+        // Simulate API call or use hardcoded data
+        const eventsData = [
     {
       id: 1,
       title: "75th Anniversary Celebration Balya Bhavan",
@@ -86,32 +103,78 @@ export default function EventsPage() {
     },
   ]
 
-  const [viewMode, setViewMode] = useState<"grid" | "calendar">("grid")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [sortBy, setSortBy] = useState("date")
+        // Ensure we always set an array
+        setEvents(Array.isArray(eventsData) ? eventsData : [])
+      } catch (err) {
+        console.error('Error loading events:', err)
+        setError('Failed to load events')
+        setEvents([]) // Set empty array on error
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadEvents()
+  }, [])
 
   const filteredAndSortedEvents = useMemo(() => {
+    // Ensure events is always an array to prevent mapping errors
+    if (!Array.isArray(events) || events.length === 0) {
+      return []
+    }
     const filtered = events.filter((event) => {
-      const matchesSearch =
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchTerm.toLowerCase())
+      // Add null checks for event properties
+      if (!event) return false
+      
+      const matchesSearch = (event.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (event.description || '').toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory === "all" || event.category === selectedCategory
       return matchesSearch && matchesCategory
     })
 
     return filtered.sort((a, b) => {
       if (sortBy === "date") {
-        return new Date(a.date).getTime() - new Date(b.date).getTime()
+        const dateA = a?.date ? new Date(a.date).getTime() : 0
+        const dateB = b?.date ? new Date(b.date).getTime() : 0
+        return dateA - dateB
       }
       if (sortBy === "attendees") {
-        return b.attendees - a.attendees
+        return (b?.attendees || 0) - (a?.attendees || 0)
       }
-      return a.title.localeCompare(b.title)
+      return (a?.title || '').localeCompare(b?.title || '')
     })
-  }, [searchTerm, selectedCategory, sortBy])
+  }, [events, searchTerm, selectedCategory, sortBy])
 
-  const featuredEvent = events.find((event) => event.featured)
+  const featuredEvent = Array.isArray(events) ? events.find((event) => event?.featured) : null
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <p className="text-white/80">Loading events...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Error: {error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -146,47 +209,51 @@ export default function EventsPage() {
               <div className="flex flex-col lg:flex-row">
                 <div className="lg:w-1/3 xl:w-2/5">
                   <div className="relative aspect-[3/2] lg:aspect-[4/5] xl:aspect-[3/2] overflow-hidden">
-                    {featuredEvent.image.startsWith('http') || featuredEvent.image.startsWith('https') ? (
+                    {featuredEvent?.image && (featuredEvent.image.startsWith('http') || featuredEvent.image.startsWith('https')) ? (
                       <Image
                         src={featuredEvent.image}
-                        alt={featuredEvent.title}
+                        alt={featuredEvent?.title || 'Featured event'}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 40vw"
                         className="object-cover transition-transform duration-300 hover:scale-105"
                         priority
                       />
-                    ) : (
+                    ) : featuredEvent?.image ? (
                       <img
                         src={featuredEvent.image}
-                        alt={featuredEvent.title}
+                        alt={featuredEvent?.title || 'Featured event'}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
+                    ) : (
+                      <div className="w-full h-full bg-gray-600 flex items-center justify-center">
+                        <span className="text-white/60">No image</span>
+                      </div>
                     )}
                   </div>
                 </div>
                 <div className="lg:w-2/3 xl:w-3/5 p-6 lg:p-8 xl:p-10 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-4">
                     <Badge className="bg-purple-600 text-white">
-                      {featuredEvent.category}
+                      {featuredEvent?.category || 'Featured'}
                     </Badge>
                     <Badge variant="outline" className="border-green-400 text-green-400">
-                      {featuredEvent.status}
+                      {featuredEvent?.status || 'Active'}
                     </Badge>
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">{featuredEvent.title}</h3>
-                  <p className="text-white/80 mb-6">{featuredEvent.description}</p>
+                  <h3 className="text-2xl font-bold text-white mb-4">{featuredEvent?.title || 'Featured Event'}</h3>
+                  <p className="text-white/80 mb-6">{featuredEvent?.description || 'No description available'}</p>
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center gap-3 text-white/70">
                       <Calendar className="w-4 h-4" />
-                      <span>{featuredEvent.date}</span>
+                      <span>{featuredEvent?.date || 'TBD'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-white/70">
                       <Clock className="w-4 h-4" />
-                      <span>{featuredEvent.time}</span>
+                      <span>{featuredEvent?.time || 'TBD'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-white/70">
                       <MapPin className="w-4 h-4" />
-                      <span>{featuredEvent.location}</span>
+                      <span>{featuredEvent?.location || 'TBD'}</span>
                     </div>
                   </div>
 
@@ -254,59 +321,83 @@ export default function EventsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {filteredAndSortedEvents
-            .filter((event) => !event.featured)
-            .map((event) => (
-              <Card key={event.id} className="bg-white/10 border-white/20 backdrop-blur-lg overflow-hidden hover:bg-white/15 transition-all duration-300">
+          {filteredAndSortedEvents && filteredAndSortedEvents.length > 0 ? (
+            filteredAndSortedEvents
+              .filter((event) => !event?.featured)
+              .map((event) => (
+              <Card key={event?.id || Math.random()} className="bg-white/10 border-white/20 backdrop-blur-lg overflow-hidden hover:bg-white/15 transition-all duration-300">
                 <div className="relative">
-                  {event.image.startsWith('http') || event.image.startsWith('https') ? (
+                  {event?.image && (event.image.startsWith('http') || event.image.startsWith('https')) ? (
                     <Image
                       src={event.image}
-                      alt={event.title}
+                      alt={event?.title || 'Event image'}
                       width={400}
                       height={200}
                       className="w-full h-48 object-cover"
                     />
-                  ) : (
+                  ) : event?.image ? (
                     <img
                       src={event.image}
-                      alt={event.title}
+                      alt={event?.title || 'Event image'}
                       className="w-full h-48 object-cover"
                     />
+                  ) : (
+                    <div className="w-full h-48 bg-gray-600 flex items-center justify-center">
+                      <span className="text-white/60">No image</span>
+                    </div>
                   )}
                   <div className="absolute top-4 left-4 flex gap-2">
                     <Badge className="bg-purple-600 text-white">
-                      {event.category}
+                      {event?.category || 'Event'}
                     </Badge>
                     <Badge variant="outline" className="border-green-400 text-green-400 bg-black/50">
-                      {event.status}
+                      {event?.status || 'Active'}
                     </Badge>
                   </div>
                 </div>
                 <CardHeader>
-                  <CardTitle className="text-white text-lg">{event.title}</CardTitle>
+                  <CardTitle className="text-white text-lg">{event?.title || 'Untitled Event'}</CardTitle>
                   <CardDescription className="text-white/70">
-                    {event.description}
+                    {event?.description || 'No description available'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-white/70 text-sm">
                       <Calendar className="w-4 h-4" />
-                      <span>{event.date}</span>
+                      <span>{event?.date || 'TBD'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-white/70 text-sm">
                       <Clock className="w-4 h-4" />
-                      <span>{event.time}</span>
+                      <span>{event?.time || 'TBD'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-white/70 text-sm">
                       <MapPin className="w-4 h-4" />
-                      <span>{event.location}</span>
+                      <span>{event?.location || 'TBD'}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-white/60 text-lg mb-4">
+                {searchTerm || selectedCategory !== 'all' ? 'No events found matching your criteria.' : 'No events available at the moment.'}
+              </p>
+              {(searchTerm || selectedCategory !== 'all') && (
+                <Button 
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedCategory('all')
+                  }}
+                  variant="outline" 
+                  className="border-white/20 text-white hover:bg-white/10 bg-transparent"
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="text-center">
