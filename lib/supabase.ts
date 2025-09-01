@@ -34,7 +34,8 @@ const createDummyClient = () => {
     from: () => ({
       select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
       insert: () => Promise.resolve({ data: null, error: null })
-    })
+    }),
+    rpc: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured - RPC functions unavailable' } })
   } as any
 }
 
