@@ -324,16 +324,25 @@ export async function verifyJWT(token: string): Promise<any> {
     const parts = token.split(".")
     if (parts.length !== 3) return null
 
-    const payload = JSON.parse(atob(parts[1]))
+    const [header, payload, signature] = parts
+    
+    // Verify signature
+    const expectedSignature = btoa(`${header}.${payload}.${JWT_SECRET}`)
+    if (signature !== expectedSignature) {
+      console.log("[v0] JWT signature verification failed")
+      return null
+    }
+
+    const decodedPayload = JSON.parse(atob(payload))
     const now = Math.floor(Date.now() / 1000)
 
     // Check expiration
-    if (payload.exp && payload.exp < now) {
+    if (decodedPayload.exp && decodedPayload.exp < now) {
       console.log("[v0] JWT expired")
       return null
     }
 
-    return payload
+    return decodedPayload
   } catch (error) {
     console.log("[v0] JWT verification failed, returning null")
     return null

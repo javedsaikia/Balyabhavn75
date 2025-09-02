@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { useRouter } from "next/navigation"
 
 interface LogoutButtonProps {
@@ -13,6 +14,7 @@ interface LogoutButtonProps {
 
 export function LogoutButton({ variant = "outline", size = "default", className = "" }: LogoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -35,15 +37,29 @@ export function LogoutButton({ variant = "outline", size = "default", className 
   }
 
   return (
-    <Button
-      onClick={handleLogout}
-      disabled={isLoading}
-      variant={variant}
-      size={size}
-      className={`${className} ${variant === "outline" ? "border-white/20 text-white hover:bg-white/10 bg-transparent" : ""}`}
-    >
-      <LogOut className="w-4 h-4 mr-2" />
-      {isLoading ? "Signing Out..." : "Sign Out"}
-    </Button>
+    <>
+      <Button
+        onClick={() => setShowLogoutDialog(true)}
+        disabled={isLoading}
+        variant={variant}
+        size={size}
+        className={`${className} ${variant === "outline" ? "border-white/20 text-white hover:bg-white/10 bg-transparent" : ""}`}
+      >
+        <LogOut className="w-4 h-4 mr-2" />
+        Sign Out
+      </Button>
+      
+      <ConfirmationDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={handleLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You will need to log in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={isLoading}
+      />
+    </>
   )
 }

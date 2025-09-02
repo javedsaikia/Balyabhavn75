@@ -30,5 +30,12 @@ export default function RootLayout({
 }
 
 export const metadata = {
-      generator: 'v0.app'
-    };
+  title: 'Diamond Anniversary - 75 Years of Excellence',
+  description: 'Celebrate 75 years of excellence with our Diamond Anniversary events and celebrations.',
+  generator: 'v0.app'
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};

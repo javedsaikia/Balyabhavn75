@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+import { LogoutButton } from "@/components/logout-button"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -31,6 +33,7 @@ export default function EventsPage() {
   const [sortBy, setSortBy] = useState("date")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
   
   // Load events data
   useEffect(() => {
@@ -179,6 +182,10 @@ export default function EventsPage() {
   return (
     <div className="relative z-10 min-h-screen px-4 py-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header with Logout */}
+        <div className="flex justify-end items-center mb-8">
+          <LogoutButton variant="outline" size="sm" />
+        </div>
         <div className="text-center mb-12">
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
@@ -329,7 +336,7 @@ export default function EventsPage() {
             filteredAndSortedEvents
               .filter((event) => !event?.featured)
               .map((event) => (
-              <Card key={event?.id || Math.random()} className="bg-white/8 border border-white/20 backdrop-blur-xl shadow-xl overflow-hidden hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 transform hover:-translate-y-1">
+              <Card key={event?.id || `event-${event?.title?.replace(/\s+/g, '-').toLowerCase()}`} className="bg-white/8 border border-white/20 backdrop-blur-xl shadow-xl overflow-hidden hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 transform hover:-translate-y-1">
                 <div className="relative">
                   {event?.image && (event.image.startsWith('http') || event.image.startsWith('https')) ? (
                     <Image
@@ -421,6 +428,7 @@ export default function EventsPage() {
           </div>
         </div>
       </div>
+
     </div>
   )
 }

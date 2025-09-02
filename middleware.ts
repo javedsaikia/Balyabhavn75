@@ -84,7 +84,11 @@ export async function middleware(request: NextRequest) {
       const { data: { user }, error } = await supabase.auth.getUser()
 
       if (!user || error) {
-        console.log('Supabase auth failed, redirecting to login')
+        // Don't log refresh token errors as they're expected when users don't have valid sessions
+        if (error && !error.message?.includes('refresh_token_not_found') && 
+            !error.message?.includes('Invalid Refresh Token')) {
+          console.log('Supabase auth failed:', error.message)
+        }
         return NextResponse.redirect(new URL("/?error=authentication_required", request.url))
       }
 

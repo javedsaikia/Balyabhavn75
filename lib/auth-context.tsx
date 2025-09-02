@@ -29,7 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const supabase = getSupabaseClient()
         const { data: { session }, error } = await supabase.auth.getSession()
         
-        if (session?.user && !error) {
+        // Handle specific Supabase auth errors silently
+        if (error) {
+          // Don't log refresh token errors as they're expected when users don't have valid sessions
+          if (!error.message?.includes('refresh_token_not_found') && 
+              !error.message?.includes('Invalid Refresh Token')) {
+            console.error('Supabase auth error:', error.message)
+          }
+          // Clear user state and continue to JWT fallback
+          setUser(null)
+        } else if (session?.user) {
           // Get user profile from our users table
           const { data: profile } = await supabase
             .from('users')
